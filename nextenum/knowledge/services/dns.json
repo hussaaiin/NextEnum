@@ -1,0 +1,144 @@
+{
+  "service": "dns",
+  "display_name": "DNS / Domain Name Service",
+  "description": "DNS resolves names to IP addresses and can reveal domains, subdomains, mail servers, name servers, internal hostnames, and sometimes full zone data when misconfigured.",
+  "base_priority": "medium",
+  "why_prioritize": [
+    "DNS can expand your target list by revealing hostnames, subdomains, and infrastructure clues.",
+    "Misconfigured DNS servers may allow zone transfers, which can expose many records at once.",
+    "DNS findings often help connect web, mail, SMB, and database services to real hostnames."
+  ],
+  "enumeration_steps": [
+    {
+      "title": "Identify basic DNS records",
+      "reason": "Basic records help you understand the domain structure and important hosts.",
+      "commands": [
+        "dig @{target} DOMAIN any",
+        "dig @{target} DOMAIN ns",
+        "dig @{target} DOMAIN mx",
+        "dig @{target} DOMAIN txt"
+      ],
+      "look_for": [
+        "Name servers",
+        "Mail servers",
+        "TXT records",
+        "Hostnames",
+        "Internal naming patterns"
+      ]
+    },
+    {
+      "title": "Check for zone transfer",
+      "reason": "Zone transfer can expose a full list of DNS records when the server is misconfigured.",
+      "commands": [
+        "dig @{target} axfr DOMAIN",
+        "dnsrecon -d DOMAIN -n {target} -t axfr"
+      ],
+      "look_for": [
+        "AXFR success",
+        "Subdomains",
+        "Internal hostnames",
+        "Service-specific records",
+        "Old or staging hosts"
+      ]
+    },
+    {
+      "title": "Run DNS enumeration tools",
+      "reason": "DNS enumeration tools can automate common checks and organize useful records.",
+      "commands": [
+        "dnsrecon -d DOMAIN -n {target}",
+        "dnsenum --dnsserver {target} DOMAIN",
+        "fierce --domain DOMAIN --dns-servers {target}"
+      ],
+      "look_for": [
+        "Subdomains",
+        "Zone transfer results",
+        "Wildcard DNS behavior",
+        "Reverse lookup results",
+        "Interesting hostnames"
+      ]
+    },
+    {
+      "title": "Check reverse DNS when you have IP ranges",
+      "reason": "Reverse DNS records can reveal hostnames that are not obvious from the main website or scan output.",
+      "commands": [
+        "dig @{target} -x IP_ADDRESS",
+        "dnsrecon -r IP_RANGE -n {target}"
+      ],
+      "look_for": [
+        "PTR records",
+        "Internal hostnames",
+        "Server roles in names",
+        "Development or staging naming patterns"
+      ]
+    }
+  ],
+  "finding_next_steps": [
+    {
+      "finding": "Zone transfer allowed",
+      "next_steps": [
+        "Save the full zone output for review.",
+        "Extract hostnames and add them to your notes.",
+        "Map discovered hostnames to IP addresses and services.",
+        "Use the hostnames for web virtual host checks and targeted enumeration."
+      ]
+    },
+    {
+      "finding": "New subdomains discovered",
+      "next_steps": [
+        "Resolve each subdomain and check whether it points to an in-scope IP.",
+        "Browse web-related subdomains manually.",
+        "Run focused scans against newly discovered in-scope hosts when allowed.",
+        "Look for names like dev, test, staging, admin, backup, git, vpn, mail, or db."
+      ]
+    },
+    {
+      "finding": "Mail records discovered",
+      "next_steps": [
+        "Check whether SMTP or webmail services are exposed.",
+        "Note email domain patterns that may reveal username formats.",
+        "Use mail hostnames as leads for service enumeration.",
+        "Look for SPF, DKIM, and DMARC TXT records that reveal infrastructure."
+      ]
+    },
+    {
+      "finding": "Internal hostname or naming pattern",
+      "next_steps": [
+        "Record the naming pattern and reuse it when guessing related hosts in labs.",
+        "Check whether names reveal roles such as db, backup, intranet, files, dc, or admin.",
+        "Use discovered hostnames when testing virtual hosts on web servers.",
+        "Connect hostnames to services found in your Nmap results."
+      ]
+    },
+    {
+      "finding": "TXT record with useful data",
+      "next_steps": [
+        "Review the TXT content for service names, verification tokens, cloud providers, or email security records.",
+        "Check whether any values reveal internal domains or third-party services.",
+        "Use discovered domains or providers as context for later enumeration.",
+        "Do not treat tokens as credentials unless the lab clearly makes them useful."
+      ]
+    },
+    {
+      "finding": "DNS version leak",
+      "next_steps": [
+        "Record the DNS software and version.",
+        "Search for known issues affecting that exact version.",
+        "Confirm the version with more than one method when possible.",
+        "Continue record enumeration before assuming exploitability."
+      ]
+    }
+  ],
+  "beginner_notes": [
+    "DNS enumeration needs a domain name. If you only have an IP, look for hostnames in Nmap output, web pages, certificates, or reverse DNS.",
+    "Use discovered hostnames as leads for virtual host testing on web services.",
+    "Zone transfer is a high-value finding in labs, but most real systems block it.",
+    "Keep DNS findings organized because they often connect many services together."
+  ],
+  "useful_nmap_scripts": [
+    "dns-nsid",
+    "dns-recursion",
+    "dns-zone-transfer",
+    "dns-service-discovery",
+    "dns-brute"
+  ]
+}

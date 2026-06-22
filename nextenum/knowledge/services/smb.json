@@ -1,0 +1,151 @@
+{
+  "service": "smb",
+  "display_name": "SMB / Windows File Sharing",
+  "description": "SMB is used for file sharing, printer sharing, named pipes, and Windows network communication. In labs and CTFs, SMB can expose shares, users, host information, writable folders, and sometimes credentials inside files.",
+  "base_priority": "high",
+  "why_prioritize": [
+    "SMB can reveal shares, usernames, hostnames, domains, operating system details, and security settings.",
+    "Readable shares often contain notes, backups, scripts, configuration files, or credentials.",
+    "SMB findings often connect directly to other services such as WinRM, RDP, SSH, web apps, or databases."
+  ],
+  "enumeration_steps": [
+    {
+      "title": "Check SMB version, host info, and security mode",
+      "reason": "Basic SMB enumeration can reveal the operating system, hostname, workgroup or domain, and whether signing is required.",
+      "commands": [
+        "nmap -p {port} --script smb-os-discovery,smb2-security-mode,smb2-time {target}",
+        "nmap -sV -p {port} {target}"
+      ],
+      "look_for": [
+        "Operating system details",
+        "Computer name",
+        "Domain or workgroup",
+        "SMB signing status",
+        "Samba or Windows version"
+      ]
+    },
+    {
+      "title": "List shares without credentials",
+      "reason": "Null or guest access can expose shares without valid credentials in labs.",
+      "commands": [
+        "smbclient -L //{target}/ -N",
+        "smbmap -H {target}",
+        "enum4linux-ng -A {target}"
+      ],
+      "look_for": [
+        "Anonymous share listing",
+        "Guest access",
+        "Readable shares",
+        "Writable shares",
+        "Share comments"
+      ]
+    },
+    {
+      "title": "Connect to interesting shares",
+      "reason": "The main value of SMB enumeration often comes from reading files inside accessible shares.",
+      "commands": [
+        "smbclient //{target}/SHARE -N",
+        "smbclient //{target}/SHARE -U username",
+        "recurse ON",
+        "ls",
+        "get FILENAME",
+        "mget *"
+      ],
+      "look_for": [
+        "Backups",
+        "Configuration files",
+        "Scripts",
+        "Documents",
+        "Password files",
+        "Usernames"
+      ]
+    },
+    {
+      "title": "Enumerate users and groups when allowed",
+      "reason": "Usernames from SMB can be used later for SSH, web logins, RDP, WinRM, or password spraying in controlled labs.",
+      "commands": [
+        "nmap -p {port} --script smb-enum-users,smb-enum-groups {target}",
+        "rpcclient -U \"\" -N {target}",
+        "enumdomusers",
+        "querydispinfo"
+      ],
+      "look_for": [
+        "Domain users",
+        "Local users",
+        "Groups",
+        "Disabled accounts",
+        "Naming patterns"
+      ]
+    }
+  ],
+  "finding_next_steps": [
+    {
+      "finding": "Anonymous or guest access",
+      "next_steps": [
+        "List all shares and note permissions carefully.",
+        "Connect to each readable share and review files offline.",
+        "Check whether guest access also allows user or group enumeration.",
+        "Use discovered names and paths to guide other service checks."
+      ]
+    },
+    {
+      "finding": "Readable share",
+      "next_steps": [
+        "Download interesting files for offline review.",
+        "Search files for passwords, usernames, internal hostnames, paths, and scripts.",
+        "Check whether documents contain metadata or old notes.",
+        "Look for backups that may reveal application or database credentials."
+      ]
+    },
+    {
+      "finding": "Writable share",
+      "next_steps": [
+        "Confirm write access using a harmless test file.",
+        "Check whether the writable share is connected to a web path, script folder, or scheduled task location.",
+        "Remove test files after checking to keep the lab clean.",
+        "Document the exact share and folder permissions."
+      ]
+    },
+    {
+      "finding": "User list discovered",
+      "next_steps": [
+        "Save the usernames into a clean wordlist.",
+        "Look for naming patterns such as first.last or initials.",
+        "Use the usernames when checking SSH, RDP, WinRM, web login pages, or FTP.",
+        "Avoid guessing passwords randomly; connect usernames with clues found in files."
+      ]
+    },
+    {
+      "finding": "SMB signing not required",
+      "next_steps": [
+        "Record the finding because it can matter in some network labs.",
+        "Continue normal enumeration first instead of assuming it is immediately exploitable.",
+        "Check whether the environment has multiple hosts where relay-style issues may be relevant.",
+        "Keep the finding in your notes for later attack-path review."
+      ]
+    },
+    {
+      "finding": "Old Samba or Windows version",
+      "next_steps": [
+        "Search for known issues affecting that exact version.",
+        "Confirm the version using Nmap scripts and other banners when possible.",
+        "Check shares and files manually before assuming exploitability.",
+        "Use version details as a lead, not proof."
+      ]
+    }
+  ],
+  "beginner_notes": [
+    "Always check for anonymous or guest access when SMB is open in a lab.",
+    "Do not stop at share names. Connect to readable shares and inspect the files.",
+    "Take notes of share permissions because readable and writable are very different findings.",
+    "SMB can expose a lot of information even without direct code execution."
+  ],
+  "useful_nmap_scripts": [
+    "smb-os-discovery",
+    "smb2-security-mode",
+    "smb-enum-shares",
+    "smb-enum-users",
+    "smb-enum-groups",
+    "smb-protocols"
+  ]
+}

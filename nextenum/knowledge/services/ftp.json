@@ -1,0 +1,132 @@
+{
+  "service": "ftp",
+  "display_name": "FTP / File Transfer Service",
+  "description": "FTP services are used to transfer files. In labs and CTFs, they may expose anonymous access, readable files, writable directories, backups, or credentials inside downloaded files.",
+  "base_priority": "medium",
+  "why_prioritize": [
+    "FTP can expose files directly, sometimes without authentication through anonymous login.",
+    "Files found through FTP often contain usernames, passwords, configuration details, source code, or clues for other services.",
+    "Writable FTP directories can reveal upload behavior that is useful to understand during enumeration."
+  ],
+  "enumeration_steps": [
+    {
+      "title": "Check the FTP banner and version",
+      "reason": "The banner can reveal the FTP server software and version, which helps you understand what you are dealing with.",
+      "commands": [
+        "nmap -sV -p {port} {target}",
+        "nc -nv {target} {port}"
+      ],
+      "look_for": [
+        "FTP server product",
+        "Version number",
+        "Custom banner text",
+        "Hostnames or internal names"
+      ]
+    },
+    {
+      "title": "Check anonymous login",
+      "reason": "Anonymous FTP access is common in labs and can expose files without valid credentials.",
+      "commands": [
+        "ftp {target} {port}",
+        "nmap -p {port} --script ftp-anon {target}"
+      ],
+      "look_for": [
+        "Anonymous login allowed",
+        "Readable directories",
+        "Writable directories",
+        "Interesting filenames"
+      ]
+    },
+    {
+      "title": "List directories and download interesting files",
+      "reason": "The main value of FTP enumeration is often reviewing exposed files carefully.",
+      "commands": [
+        "ftp {target} {port}",
+        "ls -la",
+        "get FILENAME",
+        "mget *"
+      ],
+      "look_for": [
+        "Backup files",
+        "Configuration files",
+        "Notes or README files",
+        "Compressed archives",
+        "Files mentioning users or passwords"
+      ]
+    },
+    {
+      "title": "Check write access safely",
+      "reason": "Writable FTP directories can change the risk of the service, but you should test carefully in authorized labs only.",
+      "commands": [
+        "ftp {target} {port}",
+        "put test.txt",
+        "delete test.txt"
+      ],
+      "look_for": [
+        "Upload allowed",
+        "Permission denied messages",
+        "Writable upload folders",
+        "Whether uploaded files are accessible somewhere else"
+      ]
+    }
+  ],
+  "finding_next_steps": [
+    {
+      "finding": "Anonymous login allowed",
+      "next_steps": [
+        "List all accessible directories and files.",
+        "Download interesting files for offline review.",
+        "Check for credentials, usernames, hostnames, and internal paths.",
+        "Use any discovered information to guide enumeration of other services."
+      ]
+    },
+    {
+      "finding": "Readable backup or config files",
+      "next_steps": [
+        "Search the files for passwords, tokens, database names, and usernames.",
+        "Check whether the same credentials work on SSH, web logins, SMB, or databases.",
+        "Look for application paths that map to web directories.",
+        "Take note of software names and versions mentioned in the files."
+      ]
+    },
+    {
+      "finding": "Writable directory",
+      "next_steps": [
+        "Confirm whether uploads are allowed using a harmless test file.",
+        "Check whether uploaded files can be downloaded back from FTP.",
+        "Look for a related web service that may expose the same directory.",
+        "Remove test files after checking to keep the lab clean."
+      ]
+    },
+    {
+      "finding": "Credentials or usernames in files",
+      "next_steps": [
+        "Record the username, password, and where they were found.",
+        "Try the credentials carefully against related services in the lab.",
+        "Check whether the username appears in web pages, SMB shares, SSH, or database services.",
+        "Avoid assuming one credential works everywhere; verify service by service."
+      ]
+    },
+    {
+      "finding": "Old FTP version",
+      "next_steps": [
+        "Search for known issues affecting that exact product and version.",
+        "Confirm the version with more than one source when possible.",
+        "Check whether the version is a lab hint or just outdated banner text.",
+        "Prioritize manual enumeration before assuming exploitability."
+      ]
+    }
+  ],
+  "beginner_notes": [
+    "Always try anonymous login in labs when FTP is open.",
+    "Do not only look at filenames. Download and read interesting files carefully.",
+    "Use binary mode when downloading non-text files through the FTP client.",
+    "If FTP exposes credentials, test them carefully and take notes of where they came from."
+  ],
+  "useful_nmap_scripts": [
+    "ftp-anon",
+    "ftp-syst",
+    "ftp-bounce",
+    "ftp-vsftpd-backdoor"
+  ]
+}

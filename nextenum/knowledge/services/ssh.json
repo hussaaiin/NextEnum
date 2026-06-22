@@ -1,0 +1,127 @@
+{
+  "service": "ssh",
+  "display_name": "SSH / Secure Shell",
+  "description": "SSH provides remote command-line access to a system. In labs and CTFs, SSH is often useful after finding valid usernames, passwords, private keys, or reused credentials from another service.",
+  "base_priority": "medium",
+  "why_prioritize": [
+    "SSH usually requires valid credentials, so it becomes more important after finding usernames, passwords, or private keys elsewhere.",
+    "The SSH banner, authentication methods, and host keys can reveal useful system details.",
+    "SSH access can confirm credentials and give an interactive foothold in authorized labs."
+  ],
+  "enumeration_steps": [
+    {
+      "title": "Check the SSH banner and version",
+      "reason": "The banner can reveal the SSH server product, version, operating system hints, or custom messages.",
+      "commands": [
+        "nmap -sV -p {port} {target}",
+        "nc -nv {target} {port}"
+      ],
+      "look_for": [
+        "OpenSSH version",
+        "Operating system hints",
+        "Custom banner text",
+        "Old or unusual SSH implementations"
+      ]
+    },
+    {
+      "title": "Check SSH host keys and algorithms",
+      "reason": "Host key and algorithm information can reveal weak configuration or repeated host keys across systems.",
+      "commands": [
+        "nmap -p {port} --script ssh-hostkey,ssh2-enum-algos {target}"
+      ],
+      "look_for": [
+        "Host key types",
+        "Weak or legacy algorithms",
+        "Repeated host keys",
+        "Unusual key sizes"
+      ]
+    },
+    {
+      "title": "Try discovered credentials carefully",
+      "reason": "SSH is commonly used to verify credentials found from FTP, SMB, web apps, databases, or config files.",
+      "commands": [
+        "ssh -p {port} username@{target}",
+        "ssh -i id_rsa -p {port} username@{target}"
+      ],
+      "look_for": [
+        "Password login allowed",
+        "Private key accepted",
+        "Login banners",
+        "Restricted shells",
+        "Permission denied messages"
+      ]
+    },
+    {
+      "title": "Check authentication methods when you have a username",
+      "reason": "Knowing which authentication methods are allowed can guide your next credential checks.",
+      "commands": [
+        "nmap -p {port} --script ssh-auth-methods --script-args ssh.user=username {target}"
+      ],
+      "look_for": [
+        "publickey authentication",
+        "password authentication",
+        "keyboard-interactive authentication",
+        "Disabled or restricted methods"
+      ]
+    }
+  ],
+  "finding_next_steps": [
+    {
+      "finding": "Valid username",
+      "next_steps": [
+        "Check whether the username appears in web pages, SMB shares, FTP files, email addresses, or source code.",
+        "Use the username when checking SSH authentication methods.",
+        "Look for password reuse across other services in the lab.",
+        "Keep a clear note of where the username was found."
+      ]
+    },
+    {
+      "finding": "Valid password",
+      "next_steps": [
+        "Try the credential against SSH only in the authorized lab scope.",
+        "Check whether the same credential works for web logins, SMB, FTP, or databases.",
+        "After login, run basic host and user enumeration instead of jumping randomly.",
+        "Record which service accepted the credential."
+      ]
+    },
+    {
+      "finding": "Private key file",
+      "next_steps": [
+        "Check file permissions and store the key safely in your lab notes folder.",
+        "Identify the likely username from filenames, comments, web content, or config files.",
+        "Try the key with ssh -i only against systems in scope.",
+        "If the key is encrypted, note that it may need a passphrase found elsewhere."
+      ]
+    },
+    {
+      "finding": "Restricted shell after login",
+      "next_steps": [
+        "Check which commands are allowed.",
+        "Look for common shell escape paths through editors, pagers, or allowed binaries.",
+        "Check environment variables and PATH behavior.",
+        "Document the restriction before attempting bypasses in the lab."
+      ]
+    },
+    {
+      "finding": "Old SSH version",
+      "next_steps": [
+        "Search for known issues affecting that exact product and version.",
+        "Confirm the version with Nmap and the banner before assuming it is accurate.",
+        "Treat the version as a lead, not proof of vulnerability.",
+        "Continue credential-focused enumeration because SSH usually needs authentication."
+      ]
+    }
+  ],
+  "beginner_notes": [
+    "SSH usually becomes useful after you find credentials somewhere else.",
+    "Do not brute force blindly. In labs, use gathered usernames and passwords with clear reasoning.",
+    "If a private key fails, check permissions, username, passphrase, and whether the key belongs to another host.",
+    "After SSH login, take notes before running many commands so you do not lose track."
+  ],
+  "useful_nmap_scripts": [
+    "ssh-hostkey",
+    "ssh2-enum-algos",
+    "ssh-auth-methods",
+    "ssh-publickey-acceptance"
+  ]
+}
