@@ -1,0 +1,132 @@
+{
+  "service": "mysql",
+  "display_name": "MySQL / MariaDB Database",
+  "description": "MySQL and MariaDB are relational database services. In labs and CTFs, they may reveal application databases, users, credentials, version details, and useful data after valid credentials are found.",
+  "base_priority": "medium",
+  "why_prioritize": [
+    "Database services can contain application users, password hashes, tokens, configuration data, and sensitive records.",
+    "The service version and authentication behavior can help you understand the backend environment.",
+    "Credentials found from web apps, FTP, SMB, NFS, or config files often work against database services in labs."
+  ],
+  "enumeration_steps": [
+    {
+      "title": "Check version and basic service information",
+      "reason": "Version and protocol details help identify the database family and possible compatibility behavior.",
+      "commands": [
+        "nmap -sV -p {port} {target}",
+        "nmap -p {port} --script mysql-info {target}"
+      ],
+      "look_for": [
+        "MySQL or MariaDB version",
+        "Protocol version",
+        "Server capabilities",
+        "Authentication plugin hints"
+      ]
+    },
+    {
+      "title": "Check whether anonymous or empty-password access exists",
+      "reason": "Some lab databases allow weak or anonymous access, but this should be checked carefully and only in scope.",
+      "commands": [
+        "mysql -h {target} -P {port} -u root -p",
+        "mysql -h {target} -P {port} -u root",
+        "nmap -p {port} --script mysql-empty-password {target}"
+      ],
+      "look_for": [
+        "Login accepted",
+        "Access denied messages",
+        "Allowed users",
+        "Empty password behavior"
+      ]
+    },
+    {
+      "title": "Use discovered credentials to connect",
+      "reason": "Database credentials are commonly found inside web configuration files, backups, NFS exports, FTP files, or SMB shares.",
+      "commands": [
+        "mysql -h {target} -P {port} -u USERNAME -p"
+      ],
+      "look_for": [
+        "Successful login",
+        "Available databases",
+        "Permission level",
+        "Application-specific database names"
+      ]
+    },
+    {
+      "title": "List databases and useful tables after login",
+      "reason": "After authentication, database structure helps you locate users, credentials, settings, or application data.",
+      "commands": [
+        "SHOW DATABASES;",
+        "USE database_name;",
+        "SHOW TABLES;",
+        "SELECT user, host FROM mysql.user;"
+      ],
+      "look_for": [
+        "User tables",
+        "Password or hash columns",
+        "Tokens or API keys",
+        "Application settings",
+        "Host-based access rules"
+      ]
+    }
+  ],
+  "finding_next_steps": [
+    {
+      "finding": "Database credentials found elsewhere",
+      "next_steps": [
+        "Record where the credentials were found and what service they belong to.",
+        "Try them against MySQL only inside the authorized lab scope.",
+        "After login, list databases and identify application-specific names.",
+        "Check whether the same username appears in web apps, SSH, SMB, or FTP."
+      ]
+    },
+    {
+      "finding": "Successful database login",
+      "next_steps": [
+        "List databases and tables before dumping anything large.",
+        "Look for user, admin, settings, session, token, or config tables.",
+        "Check your privileges so you know what the account can read or modify.",
+        "Save important outputs neatly in your notes."
+      ]
+    },
+    {
+      "finding": "User or password table",
+      "next_steps": [
+        "Identify username, email, password, hash, role, and status columns.",
+        "Check whether passwords are plaintext, hashed, or encoded.",
+        "Use recovered credentials carefully against related services in the lab.",
+        "Do not assume hashes are crackable; record format and context first."
+      ]
+    },
+    {
+      "finding": "Application settings table",
+      "next_steps": [
+        "Look for base URLs, upload paths, mail settings, debug flags, and API keys.",
+        "Connect settings to web paths or services found in the scan.",
+        "Check whether file paths reveal usernames or operating system details.",
+        "Use configuration clues to guide web and filesystem enumeration."
+      ]
+    },
+    {
+      "finding": "Old MySQL or MariaDB version",
+      "next_steps": [
+        "Search for known issues affecting the exact product and version.",
+        "Confirm the version through mysql-info or an authenticated query when possible.",
+        "Treat version information as a lead, not proof of vulnerability.",
+        "Continue checking credentials and exposed application data."
+      ]
+    }
+  ],
+  "beginner_notes": [
+    "Databases usually need credentials, so check web config files, backups, FTP, SMB, and NFS for passwords.",
+    "Do not run destructive SQL commands in labs unless the task explicitly asks for it.",
+    "List structure first, then query small amounts of useful data.",
+    "Take careful notes of database names, table names, columns, and where credentials came from."
+  ],
+  "useful_nmap_scripts": [
+    "mysql-info",
+    "mysql-empty-password",
+    "mysql-users",
+    "mysql-databases",
+    "mysql-variables"
+  ]
+}

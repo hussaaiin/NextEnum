@@ -16,6 +16,11 @@ EXPECTED_GUIDES = {
     "ssh": "SSH / Secure Shell",
     "smb": "SMB / Windows File Sharing",
     "dns": "DNS / Domain Name Service",
+    "smtp": "SMTP / Mail Service",
+    "nfs": "NFS / Network File System",
+    "mysql": "MySQL / MariaDB Database",
+    "postgresql": "PostgreSQL / Database Service",
+    "rdp": "RDP / Remote Desktop",
 }
 
 
@@ -93,6 +98,51 @@ class TestKnowledgeLoader(unittest.TestCase):
                 service="dns",
                 product="ISC BIND",
                 version="9.11.3",
+            ),
+            ParsedService(
+                port=25,
+                protocol="tcp",
+                state="open",
+                raw_service="smtp",
+                service="smtp",
+                product="Postfix smtpd",
+                version="",
+            ),
+            ParsedService(
+                port=2049,
+                protocol="tcp",
+                state="open",
+                raw_service="nfs_acl",
+                service="nfs",
+                product="",
+                version="3",
+            ),
+            ParsedService(
+                port=3306,
+                protocol="tcp",
+                state="open",
+                raw_service="mysql",
+                service="mysql",
+                product="MySQL",
+                version="5.7.31",
+            ),
+            ParsedService(
+                port=5432,
+                protocol="tcp",
+                state="open",
+                raw_service="postgresql",
+                service="postgresql",
+                product="PostgreSQL DB",
+                version="9.6.0",
+            ),
+            ParsedService(
+                port=3389,
+                protocol="tcp",
+                state="open",
+                raw_service="ms-wbt-server",
+                service="rdp",
+                product="Microsoft Terminal Services",
+                version="",
             ),
         ]
 

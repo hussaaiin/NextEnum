@@ -1,0 +1,132 @@
+{
+  "service": "rdp",
+  "display_name": "RDP / Remote Desktop",
+  "description": "RDP provides graphical remote desktop access to Windows systems. In labs and CTFs, RDP becomes useful after finding valid credentials and can reveal desktop apps, files, saved sessions, and user context.",
+  "base_priority": "medium",
+  "why_prioritize": [
+    "RDP can provide an interactive desktop when valid credentials are found.",
+    "RDP encryption and Network Level Authentication details help you understand login requirements.",
+    "RDP often connects credential findings from SMB, web apps, databases, or files to direct system access."
+  ],
+  "enumeration_steps": [
+    {
+      "title": "Check RDP service and encryption settings",
+      "reason": "Encryption and security layer details show whether NLA or CredSSP is required before login.",
+      "commands": [
+        "nmap -sV -p {port} {target}",
+        "nmap -p {port} --script rdp-enum-encryption {target}"
+      ],
+      "look_for": [
+        "CredSSP required",
+        "Network Level Authentication",
+        "Security layer",
+        "Encryption level",
+        "RDP product details"
+      ]
+    },
+    {
+      "title": "Check certificate details",
+      "reason": "RDP certificates can reveal hostnames, domains, and system naming patterns.",
+      "commands": [
+        "nmap -p {port} --script ssl-cert {target}"
+      ],
+      "look_for": [
+        "Common name",
+        "Subject alternative names",
+        "Domain names",
+        "Hostname patterns",
+        "Certificate validity dates"
+      ]
+    },
+    {
+      "title": "Connect with discovered credentials",
+      "reason": "RDP usually requires valid credentials, often found through SMB, web apps, databases, password reuse, or files.",
+      "commands": [
+        "xfreerdp /u:USERNAME /p:'PASSWORD' /v:{target}:{port}",
+        "rdesktop {target}:{port}"
+      ],
+      "look_for": [
+        "Successful desktop login",
+        "Domain requirement",
+        "Password expired messages",
+        "Account restrictions",
+        "Login banners"
+      ]
+    },
+    {
+      "title": "Check user context after login",
+      "reason": "A desktop session can expose files, applications, mapped drives, browser data, and other clues that are not visible from a network scan.",
+      "commands": [
+        "whoami",
+        "hostname",
+        "net user",
+        "ipconfig /all"
+      ],
+      "look_for": [
+        "Logged-in user",
+        "Desktop files",
+        "Mapped drives",
+        "Saved tools or scripts",
+        "Internal hostnames"
+      ]
+    }
+  ],
+  "finding_next_steps": [
+    {
+      "finding": "Valid Windows credentials",
+      "next_steps": [
+        "Check whether the account is allowed to log in through RDP.",
+        "Try the credentials only against in-scope systems.",
+        "Note whether a domain prefix is required.",
+        "Check whether the same credentials work on SMB or WinRM if those services are present."
+      ]
+    },
+    {
+      "finding": "CredSSP or NLA required",
+      "next_steps": [
+        "Expect authentication before the desktop session is created.",
+        "Use valid credentials rather than anonymous checks.",
+        "Check whether the username needs a domain format like DOMAIN\\user.",
+        "Record the requirement because it affects how you test access."
+      ]
+    },
+    {
+      "finding": "Certificate reveals hostname or domain",
+      "next_steps": [
+        "Add the hostname and domain to your notes.",
+        "Use the domain when checking SMB, DNS, LDAP, or web virtual hosts if present.",
+        "Look for naming patterns that reveal server roles.",
+        "Compare certificate names with Nmap Service Info and DNS results."
+      ]
+    },
+    {
+      "finding": "Successful RDP login",
+      "next_steps": [
+        "Check the desktop, documents, downloads, and obvious application folders first.",
+        "Record the user context and hostname.",
+        "Look for notes, saved scripts, config files, or mapped drives.",
+        "Continue with normal authorized post-login enumeration and keep clear notes."
+      ]
+    },
+    {
+      "finding": "Login denied or account restricted",
+      "next_steps": [
+        "Read the exact error message carefully.",
+        "Check whether the account is valid but not allowed for RDP.",
+        "Try the same credentials against SMB or other login services in scope.",
+        "Record whether the issue is bad credentials, disabled account, expired password, or access restriction."
+      ]
+    }
+  ],
+  "beginner_notes": [
+    "RDP usually becomes useful after you find valid Windows credentials.",
+    "Different login errors can reveal whether credentials are wrong or access is restricted.",
+    "Use domain formats carefully, such as DOMAIN\\user or .\\user for local accounts.",
+    "After desktop access, take notes before exploring so you do not lose track of important findings."
+  ],
+  "useful_nmap_scripts": [
+    "rdp-enum-encryption",
+    "rdp-ntlm-info",
+    "ssl-cert"
+  ]
+}

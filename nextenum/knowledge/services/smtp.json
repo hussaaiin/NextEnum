@@ -1,0 +1,132 @@
+{
+  "service": "smtp",
+  "display_name": "SMTP / Mail Service",
+  "description": "SMTP is used to send email. In labs and CTFs, SMTP can reveal hostnames, mail domains, valid users, supported commands, relay behavior, and sometimes useful banners or misconfigurations.",
+  "base_priority": "medium",
+  "why_prioritize": [
+    "SMTP often exposes mail server banners, domain names, and supported commands that help identify the environment.",
+    "User enumeration may be possible through commands like VRFY or EXPN when they are enabled.",
+    "Mail domains and usernames discovered from SMTP can become useful when checking web logins, SSH, SMB, databases, or password reset flows."
+  ],
+  "enumeration_steps": [
+    {
+      "title": "Check the SMTP banner and version",
+      "reason": "The banner can reveal the mail server product, hostname, operating system hints, or custom information.",
+      "commands": [
+        "nmap -sV -p {port} {target}",
+        "nc -nv {target} {port}",
+        "telnet {target} {port}"
+      ],
+      "look_for": [
+        "Mail server product",
+        "Version number",
+        "Hostname or mail domain",
+        "Custom banner text",
+        "Operating system hints"
+      ]
+    },
+    {
+      "title": "List supported SMTP commands",
+      "reason": "Supported commands can show whether user enumeration, authentication, STARTTLS, or other features are available.",
+      "commands": [
+        "nmap -p {port} --script smtp-commands {target}",
+        "nc -nv {target} {port}",
+        "EHLO test.local"
+      ],
+      "look_for": [
+        "VRFY",
+        "EXPN",
+        "STARTTLS",
+        "AUTH methods",
+        "SIZE limits"
+      ]
+    },
+    {
+      "title": "Check user enumeration behavior",
+      "reason": "Some SMTP servers reveal whether a username or mailbox exists through different responses.",
+      "commands": [
+        "nmap -p {port} --script smtp-enum-users --script-args 'smtp-enum-users.methods={{VRFY,EXPN,RCPT}}' {target}",
+        "smtp-user-enum -M VRFY -U users.txt -t {target} -p {port}"
+      ],
+      "look_for": [
+        "Valid usernames",
+        "Different error messages",
+        "Accepted recipients",
+        "Disabled VRFY or EXPN commands"
+      ]
+    },
+    {
+      "title": "Check relay behavior safely",
+      "reason": "Open relay checks help identify whether the server accepts mail for external domains. This should be checked carefully in labs only.",
+      "commands": [
+        "nmap -p {port} --script smtp-open-relay {target}"
+      ],
+      "look_for": [
+        "Open relay warnings",
+        "Relay denied messages",
+        "Accepted external recipients",
+        "Mail domain restrictions"
+      ]
+    }
+  ],
+  "finding_next_steps": [
+    {
+      "finding": "Hostname or mail domain discovered",
+      "next_steps": [
+        "Add the domain and hostname to your notes.",
+        "Use the domain when checking DNS, web virtual hosts, and email address patterns.",
+        "Look for webmail, mail admin panels, or related MX records.",
+        "Connect the hostname to other services found in the scan."
+      ]
+    },
+    {
+      "finding": "VRFY or EXPN enabled",
+      "next_steps": [
+        "Test a small, focused username list based on names found elsewhere in the lab.",
+        "Record confirmed usernames and the command that confirmed them.",
+        "Use valid usernames when checking web logins, SSH, SMB, RDP, or databases.",
+        "Compare response differences carefully before marking a user as valid."
+      ]
+    },
+    {
+      "finding": "STARTTLS supported",
+      "next_steps": [
+        "Check whether TLS is required or optional.",
+        "Review certificate details for hostnames, domains, and organization names.",
+        "Use TLS-aware tools when continuing SMTP checks.",
+        "Take note of certificate names that may reveal other hosts."
+      ]
+    },
+    {
+      "finding": "Authentication methods exposed",
+      "next_steps": [
+        "Record supported authentication methods.",
+        "Check whether credentials found elsewhere might apply to mail login.",
+        "Look for webmail or mail client configuration files that mention the same service.",
+        "Avoid blind brute force; use gathered credentials and clear lab reasoning."
+      ]
+    },
+    {
+      "finding": "Open relay behavior",
+      "next_steps": [
+        "Document the exact Nmap result and the tested relay path.",
+        "Check whether the behavior is limited to internal domains or fully open.",
+        "Treat it as a configuration finding unless the lab provides a clear next step.",
+        "Do not send real external email from lab systems."
+      ]
+    }
+  ],
+  "beginner_notes": [
+    "SMTP is often useful for gathering usernames, domains, and hostnames before attempting login checks elsewhere.",
+    "Different SMTP response messages matter, so read them carefully instead of only looking for success or failure.",
+    "Use small targeted wordlists in labs. Blind guessing creates noise and usually wastes time.",
+    "Mail-related findings often connect back to DNS, webmail, password reset pages, and username formats."
+  ],
+  "useful_nmap_scripts": [
+    "smtp-commands",
+    "smtp-enum-users",
+    "smtp-open-relay",
+    "smtp-ntlm-info",
+    "ssl-cert"
+  ]
+}

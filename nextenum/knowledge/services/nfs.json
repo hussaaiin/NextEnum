@@ -1,0 +1,134 @@
+{
+  "service": "nfs",
+  "display_name": "NFS / Network File System",
+  "description": "NFS is used to share files over a network, mainly in Unix and Linux environments. In labs and CTFs, NFS can expose exported directories, readable files, writable shares, backups, and user or permission clues.",
+  "base_priority": "high",
+  "why_prioritize": [
+    "NFS can expose entire directories without normal interactive login.",
+    "Readable exports may contain credentials, SSH keys, source code, backups, or configuration files.",
+    "Writable exports can reveal important permission behavior and may connect to other services in the lab."
+  ],
+  "enumeration_steps": [
+    {
+      "title": "List exported directories",
+      "reason": "Exports show which directories are shared and who is allowed to mount them.",
+      "commands": [
+        "showmount -e {target}",
+        "nmap -p {port} --script nfs-showmount {target}"
+      ],
+      "look_for": [
+        "Exported paths",
+        "Wildcard access",
+        "Specific allowed hosts or networks",
+        "Home directories",
+        "Backup or web directories"
+      ]
+    },
+    {
+      "title": "Check NFS-related RPC services",
+      "reason": "NFS often depends on RPC services such as mountd, nlockmgr, and rpcbind.",
+      "commands": [
+        "rpcinfo -p {target}",
+        "nmap -sV -p 111,{port} {target}"
+      ],
+      "look_for": [
+        "mountd port",
+        "NFS version",
+        "rpcbind service",
+        "Additional RPC services"
+      ]
+    },
+    {
+      "title": "Mount an export for review",
+      "reason": "Mounting an allowed export lets you inspect files and permissions like a normal directory.",
+      "commands": [
+        "mkdir -p nfs_mount",
+        "sudo mount -t nfs {target}:/EXPORT_PATH nfs_mount -o nolock",
+        "ls -la nfs_mount",
+        "sudo umount nfs_mount"
+      ],
+      "look_for": [
+        "Readable files",
+        "User-owned files",
+        "SSH keys",
+        "Configuration files",
+        "Backups and archives"
+      ]
+    },
+    {
+      "title": "Review file ownership and permissions",
+      "reason": "NFS permissions depend heavily on UIDs, GIDs, and export options, so ownership can reveal useful context.",
+      "commands": [
+        "ls -lan nfs_mount",
+        "find nfs_mount -type f -maxdepth 3 -ls",
+        "find nfs_mount -type f -name '*.bak' -o -name '*.conf' -o -name '*.key'"
+      ],
+      "look_for": [
+        "Numeric UIDs and GIDs",
+        "World-readable files",
+        "Writable directories",
+        "Private keys",
+        "Config and backup files"
+      ]
+    }
+  ],
+  "finding_next_steps": [
+    {
+      "finding": "Exported home directory",
+      "next_steps": [
+        "Look for SSH keys, shell history files, notes, and configuration files.",
+        "Check file ownership and usernames connected to the exported path.",
+        "Search readable files for passwords, hostnames, and internal paths.",
+        "Use discovered usernames when checking SSH or other login services."
+      ]
+    },
+    {
+      "finding": "Wildcard export access",
+      "next_steps": [
+        "Mount the export from your lab machine if allowed.",
+        "Review permissions and exported content carefully.",
+        "Check whether the export is read-only or writable.",
+        "Document the exact export path and allowed clients."
+      ]
+    },
+    {
+      "finding": "Readable backup or config files",
+      "next_steps": [
+        "Download copies for offline review.",
+        "Search for passwords, tokens, database settings, internal paths, and usernames.",
+        "Check whether discovered credentials work on related services in scope.",
+        "Look for application names and versions mentioned inside the files."
+      ]
+    },
+    {
+      "finding": "Writable export",
+      "next_steps": [
+        "Confirm write access with a harmless test file.",
+        "Check whether files are created with your UID or mapped to another user.",
+        "Look for links between the export and web directories, scripts, or backups.",
+        "Remove test files after checking to keep the lab clean."
+      ]
+    },
+    {
+      "finding": "SSH private key found",
+      "next_steps": [
+        "Identify the likely username from path names, file ownership, or comments.",
+        "Copy the key carefully and set restrictive permissions before testing it.",
+        "Try the key only against systems inside the authorized lab scope.",
+        "If the key requires a passphrase, continue searching files for related clues."
+      ]
+    }
+  ],
+  "beginner_notes": [
+    "Always check showmount output when NFS is open.",
+    "Use ls -lan to see numeric UIDs and GIDs because names may not match your local system.",
+    "Unmount exports after testing so your lab directory stays clean.",
+    "NFS findings are often file-based, so read files carefully instead of rushing."
+  ],
+  "useful_nmap_scripts": [
+    "nfs-showmount",
+    "nfs-ls",
+    "nfs-statfs",
+    "rpcinfo"
+  ]
+}

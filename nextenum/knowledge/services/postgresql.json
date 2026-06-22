@@ -1,0 +1,132 @@
+{
+  "service": "postgresql",
+  "display_name": "PostgreSQL / Database Service",
+  "description": "PostgreSQL is a relational database service. In labs and CTFs, it may expose application data, users, password hashes, configuration values, and useful metadata after valid credentials are found.",
+  "base_priority": "medium",
+  "why_prioritize": [
+    "PostgreSQL can contain application users, credentials, tokens, settings, and sensitive lab data.",
+    "Database credentials are often reused or stored in web application configuration files.",
+    "Authenticated database access can reveal relationships between services, users, and application logic."
+  ],
+  "enumeration_steps": [
+    {
+      "title": "Check version and service information",
+      "reason": "Version and basic service information help identify the PostgreSQL server and guide later authenticated checks.",
+      "commands": [
+        "nmap -sV -p {port} {target}",
+        "nmap -p {port} --script pgsql-brute {target}"
+      ],
+      "look_for": [
+        "PostgreSQL version",
+        "Authentication behavior",
+        "Access denied messages",
+        "Known usernames from other services"
+      ]
+    },
+    {
+      "title": "Connect with discovered credentials",
+      "reason": "PostgreSQL usually requires credentials, so use information found in configuration files, backups, or other services.",
+      "commands": [
+        "psql -h {target} -p {port} -U USERNAME -d DATABASE"
+      ],
+      "look_for": [
+        "Successful login",
+        "Available databases",
+        "User privileges",
+        "Application-specific schemas"
+      ]
+    },
+    {
+      "title": "List databases and roles after login",
+      "reason": "Database and role information helps you understand what the account can access.",
+      "commands": [
+        "\\l",
+        "\\du",
+        "\\c database_name",
+        "\\dt"
+      ],
+      "look_for": [
+        "Database names",
+        "Roles and privileges",
+        "Application tables",
+        "Interesting schemas"
+      ]
+    },
+    {
+      "title": "Inspect useful tables carefully",
+      "reason": "Tables may contain users, password hashes, tokens, settings, and application clues.",
+      "commands": [
+        "SELECT current_user;",
+        "SELECT version();",
+        "SELECT table_name FROM information_schema.tables WHERE table_schema='public';",
+        "SELECT * FROM table_name LIMIT 5;"
+      ],
+      "look_for": [
+        "User tables",
+        "Password or hash columns",
+        "Role columns",
+        "Tokens or sessions",
+        "Configuration values"
+      ]
+    }
+  ],
+  "finding_next_steps": [
+    {
+      "finding": "Database credentials found elsewhere",
+      "next_steps": [
+        "Record the source of the credentials before testing them.",
+        "Try connecting to likely database names from web config files or application paths.",
+        "Check whether the same username appears in other services.",
+        "After login, list databases and roles before querying large tables."
+      ]
+    },
+    {
+      "finding": "Successful PostgreSQL login",
+      "next_steps": [
+        "List databases, roles, schemas, and tables.",
+        "Check the current user and privilege level.",
+        "Look for application-specific databases and user tables.",
+        "Keep queries small and focused so your output remains readable."
+      ]
+    },
+    {
+      "finding": "User, admin, or credential table",
+      "next_steps": [
+        "Identify username, email, password, hash, role, and active status columns.",
+        "Check whether password values are plaintext, hashed, or encoded.",
+        "Use recovered credentials carefully against related services in the lab.",
+        "Record table and column names for your report or notes."
+      ]
+    },
+    {
+      "finding": "Interesting roles or privileges",
+      "next_steps": [
+        "Check what databases and schemas the role can access.",
+        "Look for admin or application owner roles.",
+        "Review permissions before attempting any advanced database action.",
+        "Use privileges as context for understanding the lab, not as a reason to run destructive commands."
+      ]
+    },
+    {
+      "finding": "Old PostgreSQL version",
+      "next_steps": [
+        "Search for known issues affecting the exact version.",
+        "Confirm the version through Nmap and SELECT version() if authenticated.",
+        "Treat the version as a lead, not proof of vulnerability.",
+        "Continue credential and data-focused enumeration."
+      ]
+    }
+  ],
+  "beginner_notes": [
+    "PostgreSQL commonly needs a database name as well as a username and password.",
+    "Backslash commands like \\l, \\du, and \\dt are psql client commands, not normal SQL.",
+    "Query small samples first using LIMIT so the output stays manageable.",
+    "Avoid destructive SQL commands unless the lab explicitly asks for them."
+  ],
+  "useful_nmap_scripts": [
+    "pgsql-brute",
+    "pgsql-databases",
+    "pgsql-users",
+    "pgsql-empty-password"
+  ]
+}
