@@ -1,14 +1,60 @@
 Starting Nmap 7.94SVN ( https://nmap.org ) at 2026-06-22 18:30 +03
-Nmap scan report for 10.10.10.5
+Nmap scan report for nextenum-lab.local (10.10.10.5)
 Host is up (0.045s latency).
-Not shown: 996 closed tcp ports (reset)
+Not shown: 988 closed tcp ports (reset)
 
-PORT    STATE SERVICE     VERSION
-21/tcp  open  ftp         vsftpd 3.0.3
-22/tcp  open  ssh         OpenSSH 7.6p1 Ubuntu 4ubuntu0.7 (Ubuntu Linux; protocol 2.0)
-80/tcp  open  http        Apache httpd 2.4.29 ((Ubuntu))
-445/tcp open  netbios-ssn Samba smbd 4.7.6-Ubuntu
+PORT     STATE SERVICE       VERSION
+21/tcp   open  ftp           vsftpd 2.3.4
+| ftp-anon: Anonymous FTP login allowed (FTP code 230)
+|_ftp-syst: UNIX Type: L8
+22/tcp   open  ssh           OpenSSH 7.6p1 Ubuntu 4ubuntu0.7 (Ubuntu Linux; protocol 2.0)
+| ssh-hostkey:
+|   2048 aa:bb:cc:dd:11:22:33:44:55:66:77:88:99:00:aa:bb (RSA)
+|_  256 11:22:33:44:55:66:77:88:99:00:aa:bb:cc:dd:ee:ff (ED25519)
+25/tcp   open  smtp          Postfix smtpd
+| smtp-commands: nextenum-lab.local, PIPELINING, SIZE 10240000, VRFY, ETRN, STARTTLS, ENHANCEDSTATUSCODES
+|_smtp-open-relay: Server does not appear to be an open relay
+53/tcp   open  domain        ISC BIND 9.11.3-1ubuntu1.18 (Ubuntu Linux)
+| dns-nsid:
+|_  bind.version: 9.11.3-1ubuntu1.18-Ubuntu
+80/tcp   open  http          Apache httpd 2.4.29 ((Ubuntu))
+| http-title: NextEnum Lab - Login
+| http-server-header: Apache/2.4.29 (Ubuntu)
+| http-robots.txt: 2 disallowed entries
+|_/admin /backup
+139/tcp  open  netbios-ssn   Samba smbd 4.7.6-Ubuntu
+445/tcp  open  netbios-ssn   Samba smbd 4.7.6-Ubuntu
+| smb-os-discovery:
+|   OS: Unix (Samba 4.7.6-Ubuntu)
+|   Computer name: nextenum-lab
+|   NetBIOS computer name: NEXTENUM-LAB
+|   Workgroup: WORKGROUP
+|_  System time: 2026-06-22T18:31:40+03:00
+| smb2-security-mode:
+|   Message signing enabled but not required
+|_  Message signing disabled is sometimes useful to note in lab environments
+2049/tcp open  nfs_acl       3 (RPC #100227)
+| nfs-showmount:
+|_  /home *(everyone)
+3306/tcp open  mysql         MySQL 5.7.31-0ubuntu0.18.04.1
+| mysql-info:
+|   Protocol: 10
+|   Version: 5.7.31-0ubuntu0.18.04.1
+|   Thread ID: 12
+|_  Salt: abc123example
+5432/tcp open  postgresql    PostgreSQL DB 9.6.0 or later
+| pgsql-brute:
+|_  No valid accounts found
+8080/tcp open  http-proxy    Apache Tomcat/Coyote JSP engine 1.1
+| http-title: Apache Tomcat/8.5.32
+| http-server-header: Apache-Coyote/1.1
+|_http-open-proxy: Proxy might be redirecting requests
+3389/tcp open  ms-wbt-server Microsoft Terminal Services
+| rdp-enum-encryption:
+|   Security layer: CredSSP
+|   RDP encryption level: Client Compatible
+|_  CredSSP required
 
-Service Info: OSs: Unix, Linux; CPE: cpe:/o:linux:linux_kernel
+Service Info: Host: nextenum-lab; OSs: Unix, Linux; CPE: cpe:/o:linux:linux_kernel
 
-Nmap done: 1 IP address (1 host up) scanned in 12.45 seconds
+Nmap done: 1 IP address (1 host up) scanned in 34.92 seconds
