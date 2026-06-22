@@ -8,6 +8,7 @@ from textwrap import wrap
 
 from nextenum.parsers.normal_parser import ParsedNmapScan, ParsedService
 from nextenum.parsers.normal_parser import parse_normal_nmap_file
+from nextenum.parsers.xml_parser import parse_xml_nmap_file
 
 
 def main() -> None:
@@ -22,7 +23,7 @@ def main() -> None:
     file_path = Path(args.file)
 
     try:
-        scan = parse_normal_nmap_file(file_path)
+        scan = parse_nmap_file(file_path)
     except FileNotFoundError:
         print(f"[!] File not found: {file_path}")
         return
@@ -41,6 +42,14 @@ def main() -> None:
         print()
 
 
+
+def parse_nmap_file(file_path: Path) -> ParsedNmapScan:
+    """Parse an Nmap file based on its extension."""
+    if file_path.suffix.lower() == ".xml":
+        return parse_xml_nmap_file(file_path)
+
+    return parse_normal_nmap_file(file_path)
+
 def build_argument_parser() -> argparse.ArgumentParser:
     """Create and return the CLI argument parser."""
     parser = argparse.ArgumentParser(
@@ -51,7 +60,7 @@ def build_argument_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--file",
         "-f",
-        help="Path to an existing Nmap normal text output file.",
+        help="Path to an existing Nmap output file. Supports normal text and XML.",
     )
 
     parser.add_argument(

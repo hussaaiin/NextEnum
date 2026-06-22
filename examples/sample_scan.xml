@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE nmaprun>
+<nmaprun scanner="nmap" args="nmap -sV -sC -oX sample_scan.xml 10.10.10.5" startstr="Mon Jun 22 18:30:00 2026" version="7.94SVN" xmloutputversion="1.05">
+  <scaninfo type="syn" protocol="tcp" numservices="12" services="21,22,25,53,80,139,445,2049,3306,5432,8080,3389" />
+  <host>
+    <status state="up" reason="syn-ack" reason_ttl="64" />
+    <address addr="10.10.10.5" addrtype="ipv4" />
+    <hostnames>
+      <hostname name="nextenum-lab.local" type="PTR" />
+    </hostnames>
+    <ports>
+      <port protocol="tcp" portid="21">
+        <state state="open" reason="syn-ack" reason_ttl="64" />
+        <service name="ftp" product="vsftpd" version="2.3.4" method="probed" conf="10" />
+        <script id="ftp-anon" output="Anonymous FTP login allowed (FTP code 230)" />
+        <script id="ftp-syst" output="UNIX Type: L8" />
+      </port>
+      <port protocol="tcp" portid="22">
+        <state state="open" reason="syn-ack" reason_ttl="64" />
+        <service name="ssh" product="OpenSSH" version="7.6p1" extrainfo="Ubuntu 4ubuntu0.7 (Ubuntu Linux; protocol 2.0)" method="probed" conf="10" />
+        <script id="ssh-hostkey" output="2048 aa:bb:cc:dd:11:22:33:44:55:66:77:88:99:00:aa:bb (RSA)&#10;256 11:22:33:44:55:66:77:88:99:00:aa:bb:cc:dd:ee:ff (ED25519)" />
+      </port>
+      <port protocol="tcp" portid="25">
+        <state state="open" reason="syn-ack" reason_ttl="64" />
+        <service name="smtp" product="Postfix smtpd" method="probed" conf="10" />
+        <script id="smtp-commands" output="nextenum-lab.local, PIPELINING, SIZE 10240000, VRFY, ETRN, STARTTLS, ENHANCEDSTATUSCODES" />
+        <script id="smtp-open-relay" output="Server does not appear to be an open relay" />
+      </port>
+      <port protocol="tcp" portid="53">
+        <state state="open" reason="syn-ack" reason_ttl="64" />
+        <service name="domain" product="ISC BIND" version="9.11.3-1ubuntu1.18" extrainfo="Ubuntu Linux" method="probed" conf="10" />
+        <script id="dns-nsid" output="bind.version: 9.11.3-1ubuntu1.18-Ubuntu" />
+      </port>
+      <port protocol="tcp" portid="80">
+        <state state="open" reason="syn-ack" reason_ttl="64" />
+        <service name="http" product="Apache httpd" version="2.4.29" extrainfo="((Ubuntu))" method="probed" conf="10" />
+        <script id="http-title" output="NextEnum Lab - Login" />
+        <script id="http-server-header" output="Apache/2.4.29 (Ubuntu)" />
+        <script id="http-robots.txt" output="2 disallowed entries&#10;/admin /backup" />
+      </port>
+      <port protocol="tcp" portid="139">
+        <state state="open" reason="syn-ack" reason_ttl="64" />
+        <service name="netbios-ssn" product="Samba smbd" version="4.7.6-Ubuntu" method="probed" conf="10" />
+      </port>
+      <port protocol="tcp" portid="445">
+        <state state="open" reason="syn-ack" reason_ttl="64" />
+        <service name="netbios-ssn" product="Samba smbd" version="4.7.6-Ubuntu" method="probed" conf="10" />
+        <script id="smb-os-discovery" output="OS: Unix (Samba 4.7.6-Ubuntu)&#10;Computer name: nextenum-lab&#10;NetBIOS computer name: NEXTENUM-LAB&#10;Workgroup: WORKGROUP&#10;System time: 2026-06-22T18:31:40+03:00" />
+        <script id="smb2-security-mode" output="Message signing enabled but not required&#10;Message signing disabled is sometimes useful to note in lab environments" />
+      </port>
+      <port protocol="tcp" portid="2049">
+        <state state="open" reason="syn-ack" reason_ttl="64" />
+        <service name="nfs_acl" product="3" extrainfo="RPC #100227" method="table" conf="3" />
+        <script id="nfs-showmount" output="/home *(everyone)" />
+      </port>
+      <port protocol="tcp" portid="3306">
+        <state state="open" reason="syn-ack" reason_ttl="64" />
+        <service name="mysql" product="MySQL" version="5.7.31-0ubuntu0.18.04.1" method="probed" conf="10" />
+        <script id="mysql-info" output="Protocol: 10&#10;Version: 5.7.31-0ubuntu0.18.04.1&#10;Thread ID: 12&#10;Salt: abc123example" />
+      </port>
+      <port protocol="tcp" portid="5432">
+        <state state="open" reason="syn-ack" reason_ttl="64" />
+        <service name="postgresql" product="PostgreSQL DB" version="9.6.0" extrainfo="or later" method="probed" conf="10" />
+        <script id="pgsql-brute" output="No valid accounts found" />
+      </port>
+      <port protocol="tcp" portid="8080">
+        <state state="open" reason="syn-ack" reason_ttl="64" />
+        <service name="http-proxy" product="Apache Tomcat/Coyote JSP engine" version="1.1" method="probed" conf="10" />
+        <script id="http-title" output="Apache Tomcat/8.5.32" />
+        <script id="http-server-header" output="Apache-Coyote/1.1" />
+        <script id="http-open-proxy" output="Proxy might be redirecting requests" />
+      </port>
+      <port protocol="tcp" portid="3389">
+        <state state="open" reason="syn-ack" reason_ttl="64" />
+        <service name="ms-wbt-server" product="Microsoft Terminal Services" method="probed" conf="10" />
+        <script id="rdp-enum-encryption" output="Security layer: CredSSP&#10;RDP encryption level: Client Compatible&#10;CredSSP required" />
+      </port>
+    </ports>
+    <os>
+      <osmatch name="Linux 4.X" accuracy="98" />
+      <osmatch name="Linux 3.X" accuracy="92" />
+    </os>
+  </host>
+  <runstats>
+    <finished timestr="Mon Jun 22 18:30:35 2026" elapsed="34.92" summary="Nmap done: 1 IP address (1 host up) scanned in 34.92 seconds" />
+    <hosts up="1" down="0" total="1" />
+  </runstats>
+</nmaprun>
