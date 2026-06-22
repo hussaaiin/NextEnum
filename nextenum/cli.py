@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import argparse
 from pathlib import Path
-from textwrap import wrap
+from textwrap import dedent, wrap
 
 from nextenum.knowledge.loader import (
     KnowledgeBaseError,
@@ -26,6 +26,14 @@ def main() -> None:
     parser = build_argument_parser()
     args = parser.parse_args()
 
+    if args.short_help:
+        print_short_help()
+        return
+
+    if args.detailed_help:
+        print_detailed_help()
+        return
+
     if args.show_scripts and args.only_scripts:
         parser.error("Use either --show-scripts or --only-scripts, not both.")
 
@@ -36,7 +44,7 @@ def main() -> None:
         parser.error("Use either --show-scripts or --guide, not both.")
 
     if not args.file:
-        parser.print_help()
+        print_short_help()
         return
 
     file_path = Path(args.file)
@@ -83,6 +91,21 @@ def build_argument_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="nextenum",
         description="Guide enumeration after Nmap scans.",
+        add_help=False,
+    )
+
+    parser.add_argument(
+        "-h",
+        dest="short_help",
+        action="store_true",
+        help=argparse.SUPPRESS,
+    )
+
+    parser.add_argument(
+        "--help",
+        dest="detailed_help",
+        action="store_true",
+        help=argparse.SUPPRESS,
     )
 
     parser.add_argument(
@@ -120,6 +143,104 @@ def build_argument_parser() -> argparse.ArgumentParser:
     )
 
     return parser
+
+
+def print_short_help() -> None:
+    """Print the short help menu."""
+    print(
+        dedent(
+            """
+            NextEnum - Nmap enumeration guide
+
+            Usage:
+              nextenum -f SCAN_FILE [options]
+
+            Common flags:
+              -f, --file FILE        Read an Nmap normal text or XML output file.
+              -t, --target TARGET    Override the target detected from the scan file.
+              --guide [SERVICE|PORT] Show enumeration guidance for all services, or only
+                                     selected services/ports.
+              --show-scripts         Show the service table and detailed NSE script output.
+              --only-scripts         Show only detailed NSE script output.
+
+            Example:
+              nextenum -f examples/sample_scan.xml --guide http
+
+            Use --help for the detailed help menu.
+            """
+        ).strip()
+    )
+
+
+def print_detailed_help() -> None:
+    """Print the detailed help menu."""
+    print(
+        dedent(
+            """
+            NextEnum - Nmap enumeration guide
+
+            NextEnum reads Nmap scan output and helps you decide what to enumerate next.
+            It is designed for authorized labs, CTFs, and learning environments.
+
+            Usage:
+              nextenum -f SCAN_FILE [options]
+
+            Input:
+              -f, --file FILE
+                  Path to an existing Nmap output file.
+                  Supported formats:
+                    - Normal text output, usually created with: nmap -oN scan.txt
+                    - XML output, usually created with: nmap -oX scan.xml
+
+              -t, --target TARGET
+                  Override the target detected from the scan file.
+                  Useful when the scan file does not contain the target you want shown
+                  in generated commands.
+
+            Script output:
+              --show-scripts
+                  Print the normal service summary table, then print a detailed table
+                  containing NSE script results.
+
+              --only-scripts
+                  Print only the detailed NSE script table.
+                  This cannot be combined with --guide.
+
+            Enumeration guide:
+              --guide [SERVICE_OR_PORT ...]
+                  Show enumeration guidance from the service knowledge base.
+
+                  Without values:
+                    --guide
+                    Shows guides for all detected services that have guide files.
+
+                  With service names:
+                    --guide http smb ssh
+                    Shows only the matching service guides.
+
+                  With ports:
+                    --guide 80 445 22
+                    Shows only the guides for services found on those ports.
+
+                  Service names and ports can be mixed:
+                    --guide http 445
+
+                  This cannot be combined with --show-scripts or --only-scripts.
+
+            Help:
+              -h
+                  Show the short help menu.
+
+              --help
+                  Show this detailed help menu.
+
+            Examples:
+              nextenum -f examples/sample_scan.xml
+              nextenum -f examples/sample_scan.xml -t 10.10.10.5 --guide http
+              nextenum -f examples/sample_scan.xml --only-scripts
+            """
+        ).strip()
+    )
 
 
 def print_scan_summary(target: str, scan: ParsedNmapScan) -> None:
