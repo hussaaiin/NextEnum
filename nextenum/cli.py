@@ -14,6 +14,7 @@ from nextenum.knowledge.loader import (
 from nextenum.parsers.normal_parser import ParsedNmapScan, ParsedService
 from nextenum.parsers.normal_parser import parse_normal_nmap_file
 from nextenum.parsers.xml_parser import parse_xml_nmap_file
+from nextenum.recommendations.engine import ServiceRecommendation, recommend_services
 
 
 GUIDE_WIDTH = 100
@@ -36,6 +37,15 @@ def main() -> None:
 
     if args.show_scripts and args.only_scripts:
         parser.error("Use either --show-scripts or --only-scripts, not both.")
+
+    if args.recommend and args.guide is not None:
+        parser.error("Use either --recommend or --guide, not both.")
+
+    if args.recommend and args.show_scripts:
+        parser.error("Use either --recommend or --show-scripts, not both.")
+
+    if args.recommend and args.only_scripts:
+        parser.error("Use either --recommend or --only-scripts, not both.")
 
     if args.only_scripts and args.guide is not None:
         parser.error("Use either --only-scripts or --guide, not both.")
@@ -66,6 +76,10 @@ def main() -> None:
 
     if args.guide is not None:
         print_guidance(target=target, scan=scan, guide_filters=args.guide)
+        return
+
+    if args.recommend:
+        print_recommendations(target=target, scan=scan, file_path=file_path)
         return
 
     print_scan_summary(target=target, scan=scan)
@@ -121,6 +135,13 @@ def build_argument_parser() -> argparse.ArgumentParser:
     )
 
     parser.add_argument(
+        "--recommend",
+        "-r",
+        action="store_true",
+        help="Show the recommended enumeration order for detected services.",
+    )
+
+    parser.add_argument(
         "--show-scripts",
         action="store_true",
         help="Show detailed Nmap script output after the main service table.",
@@ -158,13 +179,14 @@ def print_short_help() -> None:
             Common flags:
               -f, --file FILE        Read an Nmap normal text or XML output file.
               -t, --target TARGET    Override the target detected from the scan file.
+              -r, --recommend        Show the recommended enumeration order.
               --guide [SERVICE|PORT] Show enumeration guidance for all services, or only
                                      selected services/ports.
               --show-scripts         Show the service table and detailed NSE script output.
               --only-scripts         Show only detailed NSE script output.
 
             Example:
-              nextenum -f examples/sample_scan.xml --guide http
+              nextenum -f examples/sample_scan.xml -r
 
             Use --help for the detailed help menu.
             """
@@ -197,6 +219,13 @@ def print_detailed_help() -> None:
                   Useful when the scan file does not contain the target you want shown
                   in generated commands.
 
+            Recommendation mode:
+              -r, --recommend
+                  Show the recommended enumeration order based on detected services,
+                  versions, and Nmap script output.
+                  This mode only prints recommendations, not the normal service table.
+                  It cannot be combined with --guide, --show-scripts, or --only-scripts.
+
             Script output:
               --show-scripts
                   Print the normal service summary table, then print a detailed table
@@ -225,7 +254,7 @@ def print_detailed_help() -> None:
                   Service names and ports can be mixed:
                     --guide http 445
 
-                  This cannot be combined with --show-scripts or --only-scripts.
+                  This cannot be combined with --recommend, --show-scripts, or --only-scripts.
 
             Help:
               -h
@@ -235,7 +264,7 @@ def print_detailed_help() -> None:
                   Show this detailed help menu.
 
             Examples:
-              nextenum -f examples/sample_scan.xml
+              nextenum -f examples/sample_scan.xml -r
               nextenum -f examples/sample_scan.xml -t 10.10.10.5 --guide http
               nextenum -f examples/sample_scan.xml --only-scripts
             """
@@ -310,6 +339,95 @@ def print_script_results(scan: ParsedNmapScan) -> None:
 
     print_table(headers=headers, rows=rows, widths=widths)
     print()
+
+
+
+def print_recommendations(
+    target: str,
+    scan: ParsedNmapScan,
+    file_path: Path,
+) -> None:
+    """Print recommended enumeration order for detected services."""
+    recommendations = recommend_services(scan)
+
+    print()
+    print("=" * GUIDE_WIDTH)
+    print("NextEnum Recommended Enumeration Order")
+    print("=" * GUIDE_WIDTH)
+    print(f"Target: {target}")
+
+    if not recommendations:
+        print()
+        print("No services were found to recommend.")
+        return
+
+    print()
+    print("Priority summary")
+
+    headers = ["#", "Port", "Service", "Priority", "Score"]
+    widths = [3, 12, 20, 10, 7]
+    rows: list[list[str]] = []
+
+    for index, recommendation in enumerate(recommendations, start=1):
+        service = recommendation.service
+        rows.append(
+            [
+                str(index),
+                f"{service.port}/{service.protocol}",
+                _format_service_name(service),
+                recommendation.priority.upper(),
+                str(recommendation.score),
+            ]
+        )
+
+    print_table(headers=headers, rows=rows, widths=widths)
+
+    print()
+    print("Recommendation details")
+
+    for index, recommendation in enumerate(recommendations, start=1):
+        print_recommendation_detail(
+            index=index,
+            recommendation=recommendation,
+            file_path=file_path,
+        )
+
+
+def print_recommendation_detail(
+    index: int,
+    recommendation: ServiceRecommendation,
+    file_path: Path,
+) -> None:
+    """Print detailed reasoning for one recommendation."""
+    service = recommendation.service
+
+    print()
+    print("-" * GUIDE_WIDTH)
+    print(
+        f"[{index}] {service.port}/{service.protocol} "
+        f"{service.service.upper()} - {recommendation.priority.upper()} "
+        f"({recommendation.score})"
+    )
+    print("-" * GUIDE_WIDTH)
+
+    if service.display_info:
+        print("Detected:")
+        _print_wrapped_text(service.display_info, indent=2)
+        print()
+
+    if recommendation.reasons:
+        print("Why it is placed here:")
+        _print_bullets(recommendation.reasons, indent=2)
+    else:
+        print("Why it is placed here:")
+        _print_bullets(
+            ["No strong clues were found, so this service keeps a lower default priority."],
+            indent=2,
+        )
+
+    print()
+    print("Open the guide:")
+    print(f"  nextenum -f {_format_path_for_command(file_path)} --guide {recommendation.guide_filter}")
 
 
 def print_guidance(
@@ -595,6 +713,17 @@ def _format_bullet_table_cell(items: list[str], width: int) -> str:
             lines.append(f"  {wrapped_line}")
 
     return "\n".join(lines)
+
+
+
+def _format_path_for_command(file_path: Path) -> str:
+    """Return a path formatted safely for command examples."""
+    path_text = str(file_path)
+
+    if " " in path_text:
+        return f'"{path_text}"'
+
+    return path_text
 
 
 def format_guide_command(command: str, target: str, service: ParsedService) -> str:
