@@ -24,4 +24,7 @@ classifiers = [
 nextenum = "nextenum.cli:main"
 
 [tool.setuptools]
-packages = ["nextenum", "nextenum.parsers", "nextenum.services"]
+packages = ["nextenum", "nextenum.parsers", "nextenum.knowledge"]
+
+[tool.setuptools.package-data]
+"nextenum.knowledge" = ["services/*.json"]

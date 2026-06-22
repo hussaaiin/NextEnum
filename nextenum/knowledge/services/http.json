@@ -1,0 +1,147 @@
+{
+  "service": "http",
+  "display_name": "HTTP / Web Server",
+  "description": "HTTP services usually expose websites, APIs, admin panels, files, directories, or web applications.",
+  "base_priority": "high",
+  "why_prioritize": [
+    "Web services often expose login pages, hidden directories, CMS platforms, APIs, and version leaks.",
+    "In CTFs and labs, HTTP is commonly one of the first services worth checking manually."
+  ],
+  "enumeration_steps": [
+    {
+      "title": "Open the website in a browser",
+      "reason": "The browser view gives quick context about what the service is hosting.",
+      "commands": [
+        "{scheme}://{target}:{port}/"
+      ],
+      "look_for": [
+        "Login pages",
+        "Default pages",
+        "Admin panels",
+        "Interesting links",
+        "Error messages"
+      ]
+    },
+    {
+      "title": "Check headers and technologies",
+      "reason": "Headers and technology detection can reveal servers, frameworks, CMS names, and version leaks.",
+      "commands": [
+        "whatweb {scheme}://{target}:{port}/",
+        "curl -I {scheme}://{target}:{port}/"
+      ],
+      "look_for": [
+        "Server header",
+        "X-Powered-By header",
+        "CMS or framework name",
+        "Version numbers"
+      ]
+    },
+    {
+      "title": "Check common discovery files",
+      "reason": "Files like robots.txt and sitemap.xml can reveal hidden paths or areas the site owner did not want indexed.",
+      "commands": [
+        "curl {scheme}://{target}:{port}/robots.txt",
+        "curl {scheme}://{target}:{port}/sitemap.xml"
+      ],
+      "look_for": [
+        "Disallowed paths",
+        "Admin paths",
+        "Backup paths",
+        "Hidden directories"
+      ]
+    },
+    {
+      "title": "Run directory discovery",
+      "reason": "Hidden directories and files often reveal admin panels, backups, uploads, or configuration files.",
+      "commands": [
+        "gobuster dir -u {scheme}://{target}:{port}/ -w /usr/share/seclists/Discovery/Web-Content/directory-list-2.3-medium.txt",
+        "dirb {scheme}://{target}:{port}/"
+      ],
+      "look_for": [
+        "/admin",
+        "/backup",
+        "/uploads",
+        "/config",
+        "Old backup files",
+        "Directory listing"
+      ]
+    }
+  ],
+  "finding_next_steps": [
+    {
+      "finding": "Login page",
+      "next_steps": [
+        "Try common or default credentials if the application looks like a known product.",
+        "Check for username enumeration through login errors, password reset pages, or account lookup behavior.",
+        "Review the page source for comments, hidden fields, test users, or old development notes.",
+        "If you find valid credentials later, return to this page and test the authenticated area."
+      ]
+    },
+    {
+      "finding": "Contact form or search box",
+      "next_steps": [
+        "Test whether your input is reflected back on the page.",
+        "Check for basic XSS behavior using safe lab payloads.",
+        "Look for server-side errors that reveal framework names, file paths, or backend behavior.",
+        "Capture the request in Burp Suite and check all parameters, not only the visible form fields."
+      ]
+    },
+    {
+      "finding": "Upload page",
+      "next_steps": [
+        "Check which file extensions are allowed.",
+        "Test whether the application validates content type, file extension, or both.",
+        "Find where uploaded files are stored and whether they can be accessed directly.",
+        "Look for weak filtering, renamed files, or image processing behavior."
+      ]
+    },
+    {
+      "finding": "Directory listing",
+      "next_steps": [
+        "Review file names for backups, notes, credentials, source code, or old archives.",
+        "Download interesting files for offline review.",
+        "Check whether hidden files or nested directories are exposed.",
+        "Take note of dates and naming patterns because they can reveal older versions or forgotten paths."
+      ]
+    },
+    {
+      "finding": "robots.txt or sitemap.xml paths",
+      "next_steps": [
+        "Visit each discovered path manually.",
+        "Use the paths as seeds for more directory discovery.",
+        "Look for admin panels, backup folders, staging areas, or old application routes.",
+        "Do not assume disallowed paths are sensitive, but treat them as useful leads."
+      ]
+    },
+    {
+      "finding": "CMS, framework, or version number",
+      "next_steps": [
+        "Search for known issues affecting that exact product and version.",
+        "Check whether default admin paths exist.",
+        "Look for public documentation to understand the normal file structure.",
+        "Use version details as a lead, then verify manually before assuming it is vulnerable."
+      ]
+    },
+    {
+      "finding": "Backup, config, or source files",
+      "next_steps": [
+        "Read the file carefully for credentials, database names, internal paths, or comments.",
+        "Check whether similar backup extensions exist, such as .bak, .old, .zip, .tar.gz, or ~.",
+        "Search inside downloaded files for passwords, tokens, usernames, and hostnames.",
+        "Use any discovered paths or credentials to guide the next enumeration step."
+      ]
+    }
+  ],
+  "beginner_notes": [
+    "Do not rely only on automated tools. Open the page manually too.",
+    "Check the page source when the page looks empty.",
+    "If the port is 443 or the service is HTTPS, use https:// instead of http://.",
+    "Take notes of interesting paths and test them again after finding credentials."
+  ],
+  "useful_nmap_scripts": [
+    "http-title",
+    "http-server-header",
+    "http-robots.txt",
+    "http-enum"
+  ]
+}
