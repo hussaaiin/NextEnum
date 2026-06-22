@@ -1,0 +1,27 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "nextenum"
+version = "0.1.0"
+description = "A Python CLI tool that guides cybersecurity students through enumeration after Nmap scans."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+authors = [
+    { name = "Husain Abdulla" }
+]
+keywords = ["cybersecurity", "enumeration", "nmap", "ctf", "ejpt", "cli"]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Environment :: Console",
+    "Topic :: Security",
+    "Topic :: Utilities"
+]
+
+[project.scripts]
+nextenum = "nextenum.cli:main"
+
+[tool.setuptools]
+packages = ["nextenum", "nextenum.parsers", "nextenum.services"]
