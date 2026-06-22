@@ -1,0 +1,14 @@
+Starting Nmap 7.94SVN ( https://nmap.org ) at 2026-06-22 18:30 +03
+Nmap scan report for 10.10.10.5
+Host is up (0.045s latency).
+Not shown: 996 closed tcp ports (reset)
+
+PORT    STATE SERVICE     VERSION
+21/tcp  open  ftp         vsftpd 3.0.3
+22/tcp  open  ssh         OpenSSH 7.6p1 Ubuntu 4ubuntu0.7 (Ubuntu Linux; protocol 2.0)
+80/tcp  open  http        Apache httpd 2.4.29 ((Ubuntu))
+445/tcp open  netbios-ssn Samba smbd 4.7.6-Ubuntu
+
+Service Info: OSs: Unix, Linux; CPE: cpe:/o:linux:linux_kernel
+
+Nmap done: 1 IP address (1 host up) scanned in 12.45 seconds
