@@ -31,8 +31,6 @@ NextEnum is useful for:
 - Cybersecurity students.
 - Junior penetration testers.
 - CTF players.
-- eJPT-style lab practice.
-- Home lab users.
 - People learning enumeration methodology.
 
 The goal is to make Nmap results easier to understand and turn them into a clear next step.
