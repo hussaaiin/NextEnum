@@ -56,7 +56,7 @@ TARGET_PATTERN = re.compile(r"^Nmap scan report for (?P<target>.+)$")
 SERVICE_INFO_PATTERN = re.compile(r"^Service Info:\s*(?P<info>.+)$")
 
 SCRIPT_START_PATTERN = re.compile(
-    r"^(?P<name>[A-Za-z0-9_-]+):\s*(?P<output>.*)$"
+    r"^(?P<name>[A-Za-z0-9_.-]+):\s*(?P<output>.*)$"
 )
 
 VERSION_TOKEN_PATTERN = re.compile(
